@@ -276,5 +276,8 @@ bot_link = Label(page2, text="Discord bot", font=('Helvetica', 14, 'bold'),  fg=
 bot_link.bind("<Button-1>", lambda e: webbrowser.open_new_tab("https://discord.com/api/oauth2/authorize?client_id=995437148025126962&permissions=274878089216&scope=bot"))
 bot_link.grid(row=2, column=1)
 
+back_button = Button(page2, text="Back", command=page1.tkraise)
+back_button.grid(row=2, column=0)
+
 # Start the main loop
 window.mainloop()
