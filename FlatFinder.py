@@ -6,10 +6,7 @@ from discord import SyncWebhook
 from tkinter import *
 from tkinter import messagebox
 from PIL import ImageTk, Image
-import webbrowser
-
-
-webhook = SyncWebhook.from_url("YOUR WEBHOOK HERE")
+from datetime import datetime
 
 base_dir = os.path.dirname(__file__)
 lists_dir = os.path.join(base_dir, "property_lists")
@@ -84,6 +81,7 @@ def rm_find_URL(list):
 
 #Post all new properties to discord
 def discord_post(url_list):
+    webhook = SyncWebhook.from_url(discord_wh)
     for url in url_list:
         webhook.send("A new flat has been found!\n\n"+ url + "\n")
         print("Posted to discord\n")
@@ -95,11 +93,20 @@ def main():
     #print(rm_list, "\n\n")
     print(len(rm_list), "results found\n")
 
-
     rm_new_flats = rm_compare(rm_list)
     if len(rm_new_flats) > 0:
         rm_url_list = rm_find_URL(rm_new_flats)
         discord_post(rm_url_list)
+
+    res_num = len(rm_list)
+    res_label = Label(page2, text=f"{res_num} flats found!")
+    res_label.grid(row=1, column=1, sticky='S')
+
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    
+    last_scan_label = Label(page2, text=f"Last scan: {dt_string}")
+    last_scan_label.grid(row=2, column=1, sticky='N')
 
     window.after(int(refresh_rate)*60000, main)
     
@@ -118,6 +125,7 @@ def submit_form():
     global max_room
     global isFurnished
     global refresh_rate
+    global discord_wh
 
     # Get the values from the input
     LocationID = LocID_entry.get().upper()
@@ -128,6 +136,7 @@ def submit_form():
     max_room = max_room_variable.get()
     isFurnished = furnished_var.get()
     refresh_rate = refresh_entry.get()
+    discord_wh = discord_entry.get()
 
     ### ERROR HANDLING ###
 
@@ -159,6 +168,9 @@ def submit_form():
         error_msg = "The following inputs are invalid:\n" + errors
         messagebox.showinfo("Error", error_msg)
 
+    elif r.status_code != 200:
+        messagebox.showinfo("Could not connect", "Could not connect to Rightmove.com")
+
     elif min_price >= max_price:
         messagebox.showinfo("Error", "The min price cannot exceed the max price. Please enter new values.")
     
@@ -169,7 +181,7 @@ def submit_form():
     else:
         ### PAGE 2 CONTENTS ###
         params = Label(page2, text=f"  Location: {LocationID}\n  Minimum Price: £{min_price}\n  Maximum Price: £{max_price}\n  Radius: {radius} miles\n  Minimum Bedrooms: {min_room}\n  Maximum Bedrooms: {max_room}\n  Only searching for furnished properties: {isFurnished}", anchor="e", justify=LEFT)
-        params.grid(row=1, column=0, rowspan=1)
+        params.grid(row=1, column=0, rowspan=2, sticky='N')
 
         page2.tkraise()
         window.after(int(refresh_rate)*60000, main)
@@ -212,6 +224,8 @@ max_room_label = Label(page1, text="Maximum beds (0 for studio):")
 max_room_label.grid(row=5, column=0)
 furnished_label = Label(page1, text="Only view furnished properties?")
 furnished_label.grid(row=6, column=0)
+discord_label = Label(page1, text="Discord webhook:")
+discord_label.grid(row=7, column=0)
 
 #PAGE 1 INPUTS
 LocID_entry = Entry(page1)
@@ -237,6 +251,8 @@ max_room_chosen.grid(row=5, column=1)
 furnished_var = BooleanVar()
 furnished_entry = Checkbutton(page1, variable=furnished_var)
 furnished_entry.grid(row=6, column=1)
+discord_entry = Entry(page1, width=78)
+discord_entry.grid(row=7, column=1, columnspan=3)
 
 #Refresh rate labels/input
 refresh_label = Label(page1, text="Refresh frequency (in mins):")
@@ -260,7 +276,7 @@ img_label.pack(padx=(15, 15))
 
 # Search button
 submit_button = Button(page1, text="Search", command=submit_form)
-submit_button.grid(row=7, column=0, columnspan=5)
+submit_button.grid(row=8, column=0, columnspan=5)
 
 
 ### PAGE 2 INDEPENDENT CONTENTS ###
@@ -270,14 +286,8 @@ pg2_subtitle.grid(row=0, column=0)
 pg2_title = Label(page2, text="Flatfinder is Running", font=('Helvetica', 18, 'bold'))
 pg2_title.grid(row=0, column=1)
 
-pg2_desc = Label(page2, text="Add this discord bot to your server to be notified when FlatFinder\nfinds new properties!")
-pg2_desc.grid(row=1, column=1)
-bot_link = Label(page2, text="Discord bot", font=('Helvetica', 14, 'bold'),  fg="blue")
-bot_link.bind("<Button-1>", lambda e: webbrowser.open_new_tab("https://discord.com/api/oauth2/authorize?client_id=995437148025126962&permissions=274878089216&scope=bot"))
-bot_link.grid(row=2, column=1)
-
 back_button = Button(page2, text="Back", command=page1.tkraise)
-back_button.grid(row=2, column=0)
+back_button.grid(row=3, column=0, sticky='N')
 
 # Start the main loop
 window.mainloop()
