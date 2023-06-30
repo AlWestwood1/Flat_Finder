@@ -9,7 +9,7 @@ from PIL import ImageTk, Image
 import webbrowser
 
 
-webhook = SyncWebhook.from_url("https://discord.com/api/webhooks/995441714842063000/eR67iNsRAeDgF468Z2P5bdCcQpcGS2oSsG4TrD656RjPv0RaJApaWWgL6pqQrtJozH3w")
+webhook = SyncWebhook.from_url("YOUR WEBHOOK HERE")
 
 base_dir = os.path.dirname(__file__)
 lists_dir = os.path.join(base_dir, "property_lists")
@@ -26,7 +26,6 @@ def list_to_txt(list_in, filename):
 
 #Converts txt to list
 def txt_to_list(filename):
-    root = "/Users/alistairwestwood/Documents/VS Code/"
     path = os.path.join(lists_dir, filename)
     file = open(path, "r")
     file_list = []
@@ -159,6 +158,12 @@ def submit_form():
     if errors != "":
         error_msg = "The following inputs are invalid:\n" + errors
         messagebox.showinfo("Error", error_msg)
+
+    elif min_price >= max_price:
+        messagebox.showinfo("Error", "The min price cannot exceed the max price. Please enter new values.")
+    
+    elif min_room > max_room:
+        messagebox.showinfo("Error", "The min bedrooms must not be greater than the max bedrooms. Please enter new values.")
     
     #If no errors exist show page 2
     else:
