@@ -2,6 +2,8 @@ import requests
 import json
 import pickle
 import os
+import sys
+import configparser
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 from discord import SyncWebhook
@@ -73,6 +75,9 @@ def get_properties(user_params) -> set:
     return set(results)
 
 def check_for_new_properties(latest_ppt_data: set) -> set:
+    if not os.path.exists("property_data.pkl"):
+        return set()
+
     with open("property_data.pkl", "rb") as f:
         old_ppt_data = pickle.load(f)
 
@@ -91,24 +96,44 @@ def discord_post(url_list):
         webhook.send("A new flat has been found!\n\n"+ url + "\n")
         print("Posted to discord\n")
 
+def get_config(filename: str) -> dict:
+    config = configparser.ConfigParser()
+    try:
+        config.read(filename)
+    except FileNotFoundError as e:
+        print(f"Config file {filename} not found.")
+        sys.exit(1)
+
+    user_params = {}
+    if "user_params" not in config:
+        raise KeyError("'user_params' section not found in config file.")
+
+
+
 
 def main():
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+
     user_params = {
-        "location": "Camden",
-        "radius": 0.25,
-        "min_price": 100,
-        "max_price": 2500,
-        "min_room": 1,
-        "max_room": 2,
-        "buy_rent": "RENT",
+        "location": config["user_params"]["location"],
+        "radius": config["user_params"].getfloat("radius"),
+        "min_price": config["user_params"].getint("min_price"),
+        "max_price": config["user_params"].getint("max_price"),
+        "min_room": config["user_params"].getint("min_room"),
+        "max_room": config["user_params"].getint("max_room"),
+        "buy_rent": config["user_params"]["buy_rent"],
     }
 
     properties = get_properties(user_params)
 
+    new_properties = check_for_new_properties(properties)
+
     with open("property_data.pkl", "wb") as f:
         pickle.dump(properties, f)
 
-    urls = create_property_urls(properties, 5)
+
+    urls = create_property_urls(new_properties, 5)
     print(urls)
     discord_post(urls)
 
