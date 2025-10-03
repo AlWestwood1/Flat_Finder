@@ -1,2 +1,4 @@
 .env
 property_data.pkl
+.idea
+__pycache__
